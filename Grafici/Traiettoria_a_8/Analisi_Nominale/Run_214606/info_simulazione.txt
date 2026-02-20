@@ -1,0 +1,6 @@
+=== CONFIGURAZIONE SIMULAZIONE ===
+- Stato: Nominale
+- Track: Traiettoria_a_8
+
+=== PERFORMANCE TRACKING ===
+- RMSE: 0.03144m

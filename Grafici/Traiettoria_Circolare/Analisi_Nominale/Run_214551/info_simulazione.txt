@@ -1,0 +1,6 @@
+=== CONFIGURAZIONE SIMULAZIONE ===
+- Stato: Nominale
+- Track: Traiettoria_Circolare
+
+=== PERFORMANCE TRACKING ===
+- RMSE: 0.04618m

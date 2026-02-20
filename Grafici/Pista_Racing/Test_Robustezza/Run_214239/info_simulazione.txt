@@ -1,0 +1,7 @@
+=== CONFIGURAZIONE ===
+- Test: Robustezza
+- Traiettoria: Pista_Racing
+- Noise_Mag: 0.07
+
+=== RISULTATI CHIAVE ===
+- RMSE_con_rumore: 0.04813 m

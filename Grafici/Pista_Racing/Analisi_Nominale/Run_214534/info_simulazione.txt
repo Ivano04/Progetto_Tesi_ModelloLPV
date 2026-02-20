@@ -1,0 +1,6 @@
+=== CONFIGURAZIONE SIMULAZIONE ===
+- Stato: Nominale
+- Track: Pista_Racing
+
+=== PERFORMANCE TRACKING ===
+- RMSE: 0.04629m

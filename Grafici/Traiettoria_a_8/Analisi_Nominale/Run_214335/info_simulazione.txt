@@ -1,0 +1,6 @@
+=== CONFIGURAZIONE ===
+- Test: Nominale
+- Traiettoria: Traiettoria_a_8
+
+=== RISULTATI CHIAVE ===
+- RMSE_Laterale: 0.03144 m

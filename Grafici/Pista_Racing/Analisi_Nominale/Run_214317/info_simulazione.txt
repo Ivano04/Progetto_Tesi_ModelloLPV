@@ -1,0 +1,6 @@
+=== CONFIGURAZIONE ===
+- Test: Nominale
+- Traiettoria: Pista_Racing
+
+=== RISULTATI CHIAVE ===
+- RMSE_Laterale: 0.04629 m

@@ -1,0 +1,7 @@
+=== CONFIGURAZIONE ===
+- Test: Robustezza
+- Traiettoria: Traiettoria_a_8
+- Noise_Mag: 0.07
+
+=== RISULTATI CHIAVE ===
+- RMSE_con_rumore: 0.03718 m
