@@ -110,11 +110,7 @@ class YawRatePIDController:
 class VelocityPIDController:
 
 
-    def __init__(self,
-                 kp: float = 10.0,
-                 ki: float = 5.0,
-                 dt: float = 0.001,
-                 max_duty: float = 1.0):
+    def __init__(self, kp: float = 10.0, ki: float = 5.0, dt: float = 0.001, max_duty: float = 1.0):
 
         self.kp = kp
         self.ki = ki
