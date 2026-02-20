@@ -5,7 +5,7 @@ from scipy.interpolate import splev, splprep
 
 def generate_circular_path(radius: float, center: Tuple[float, float],
                            num_points: int = 150) -> List[Tuple[float, float]]:
-    """Genera percorso circolare"""
+    #Genera percorso circolare
     cx, cy = center
     angles = np.linspace(0, 2 * np.pi, num_points)
 
@@ -19,7 +19,7 @@ def generate_circular_path(radius: float, center: Tuple[float, float],
 
 
 def generate_figure_eight_path(width: float, num_points: int = 200) -> List[Tuple[float, float]]:
-    """Genera percorso a forma di 8"""
+    #Genera percorso a forma di 8
     path = []
     t = np.linspace(0, 2 * np.pi, num_points)
 
@@ -35,7 +35,7 @@ def generate_figure_eight_path(width: float, num_points: int = 200) -> List[Tupl
 def generate_circuite_path(waypoints: List[Tuple[float, float]],
                            num_points: int = 300,
                            smoothness: int = 3) -> List[Tuple[float, float]]:
-    """Genera circuito interpolando waypoints con spline cubica"""
+    #Genera circuito interpolando waypoints con spline cubica
     waypoints_array = np.array(waypoints)
     x = waypoints_array[:, 0]
     y = waypoints_array[:, 1]
@@ -49,7 +49,7 @@ def generate_circuite_path(waypoints: List[Tuple[float, float]],
 
 
 def get_racing_track_waypoints() -> List[Tuple[float, float]]:
-    """Restituisce waypoints della pista racing"""
+    #Restituisce waypoints della pista racing
     return [
         (0.0, 0.0), (0.5, 1.2), (1.2, 2.2),
         (2.5, 3.0), (4.5, 3.2), (6.5, 3.2), (8.2, 3.0),
