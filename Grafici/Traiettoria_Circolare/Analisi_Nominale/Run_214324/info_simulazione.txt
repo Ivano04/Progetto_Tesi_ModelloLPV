@@ -1,6 +1,0 @@
-=== CONFIGURAZIONE ===
-- Test: Nominale
-- Traiettoria: Traiettoria_Circolare
-
-=== RISULTATI CHIAVE ===
-- RMSE_Laterale: 0.04618 m

@@ -1,8 +1,0 @@
-=== CONFIGURAZIONE SIMULAZIONE ===
-- Pista: Pista_Racing
-- Metodo: LPV vs Fixed (LOW)
-
-=== PERFORMANCE TRACKING ===
-- RMSE_LPV: 0.06163 m
-- RMSE_Fisso: 0.04752 m
-- Miglioramento_Percentuale: -29.68%
