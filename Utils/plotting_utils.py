@@ -6,19 +6,23 @@ import numpy as np
 import pandas as pd
 
 
-def setup_results_dir(trajectory_name, test_type):
+def setup_results_dir(trajectory_name, test_type, integrator_type="RK4"):
     """
-    Crea una struttura gerarchica: Grafici / <Traiettoria> / <Tipo_Test> / Run_<Ora>
+    Crea una struttura gerarchica automatica basata sull'integratore usato:
+    Grafici_Eulero/ o Grafici_RK4/ <Traiettoria> / <Tipo_Test> / Run_<Ora>
     """
     timestamp = datetime.datetime.now().strftime("%H%M%S")
 
-    # Percorso: Grafici / Pista_Racing / Analisi_Nominale / Run_123456
-    base_path = os.path.join("Grafici", trajectory_name, test_type)
+    # Determina la cartella radice in base all'integratore (Eulero o RK4)
+    root_folder = f"Grafici_{integrator_type}"
+
+    # Percorso finale: es. Grafici_RK4 / Circuito_Mugello / Analisi_Nominale / Run_123456
+    base_path = os.path.join(root_folder, trajectory_name, test_type)
     run_folder = f"Run_{timestamp}"
     run_dir = os.path.join(base_path, run_folder)
 
     os.makedirs(run_dir, exist_ok=True)
-    print(f"\n--> Risultati pronti in: {run_dir}")
+    print(f"\n--> Risultati ({integrator_type}) pronti in: {run_dir}")
     return run_dir
 
 
