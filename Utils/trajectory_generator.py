@@ -48,26 +48,31 @@ def generate_circuite_path(waypoints: List[Tuple[float, float]],
     return path
 
 
-def get_racing_track_waypoints() -> List[Tuple[float, float]]:
-    #Restituisce waypoints della pista racing
+def get_mugello_waypoints() -> List[Tuple[float, float]]:
+
+    #Restituisce i waypoints ispirati al Circuito del Mugello.
+
     return [
-        (0.0, 0.0), (0.5, 1.2), (1.2, 2.2),
-        (2.5, 3.0), (4.5, 3.2), (6.5, 3.2), (8.2, 3.0),
-        (9.0, 2.2), (9.2, 1.2),
-        (8.5, 0.3), (6.8, -0.3), (4.7, -0.5),
-        (3.5, -0.8), (2.3, -1.4),
-        (0.5, -1.6), (-1.2, -1.4), (-2.0, -0.8),
-        (-2.2, 0.0), (-1.5, 0.8), (-0.5, 1.0),
-        (1.1, -0.6), (2.1, 0.0),
+        (0.0, 0.0),    # Partenza / Rettilineo
+        (4.0, 0.0),    # Fine rettilineo principale
+        (5.5, 0.8),    # Curva 1: San Donato
+        (5.0, 2.5),    # Curva 2-3: Luco - Poggio Secco
+        (6.5, 3.5),    # Curva 4-5: Materassi - Borgo San Lorenzo
+        (8.5, 3.0),    # Curva 6-7: Casanova - Savelli
+        (10.0, 1.5),   # Curva 8-9: Arrabbiata 1 - Arrabbiata 2
+        (9.0, -1.0),   # Curva 10-11: Scarperia - Palagio
+        (6.0, -1.5),   # Curva 12: Correntaio
+        (3.0, -2.5),   # Curva 13-14: Biondetti
+        (0.5, -1.5),   # Curva 15: Bucine
+        (0.0, 0.0)     # Chiusura sul traguardo
     ]
 
-
 def get_trajectory(name: str) -> Tuple[List[Tuple[float, float]], str]:
-
     if name == 'racing':
-        waypoints = get_racing_track_waypoints()
-        path = generate_circuite_path(waypoints, num_points=300)
-        return path, "Pista_Racing"
+        # chiamata ai waypoints del Mugello
+        waypoints = get_mugello_waypoints()
+        path = generate_circuite_path(waypoints, num_points=400)
+        return path, "Circuito_Mugello"
 
     elif name == 'circular':
         path = generate_circular_path(radius=2.0, center=(2.0, 0.0), num_points=150)
@@ -78,4 +83,4 @@ def get_trajectory(name: str) -> Tuple[List[Tuple[float, float]], str]:
         return path, "Traiettoria_a_8"
 
     else:
-        raise ValueError(f"Traiettoria '{name}' non riconosciuta. Usa: 'racing', 'circular', 'eight'")
+        raise ValueError(f"Traiettoria '{name}' non riconosciuta.")
