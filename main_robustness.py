@@ -16,7 +16,7 @@ def run_robustness_simulation(scenario_key):
     supervisor_status = "Filtrato" if usa_filtro_supervisore else "Standard"
 
     # Impostare su False per verificare il fallimento numerico di Eulero con rumore 0.07
-    usa_rk4 = True
+    usa_rk4 = False
     integrator_type = "RK4" if usa_rk4 else "Eulero"
 
 
@@ -26,7 +26,6 @@ def run_robustness_simulation(scenario_key):
     path_points, track_name = get_trajectory(scenario_key)
 
     # La cartella viene creata in Grafici_RK4/ o Grafici_Eulero/ in base all'integratore scelto
-    run_dir = setup_results_dir(track_name, "Test_Robustezza", integrator_type)
 
     test_type = f"Test_Robustezza_{supervisor_status}"
     run_dir = setup_results_dir(track_name, test_type, integrator_type)

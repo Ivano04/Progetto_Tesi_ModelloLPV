@@ -11,7 +11,7 @@ from Controllo.PD_controller import LateralPDController
 def run_nominal_simulation(scenario_key):
     # --- CONFIGURAZIONE INTEGRATORE ---
     # Cambiare in False per eseguire il test con il modello di Eulero
-    usa_rk4 = False
+    usa_rk4 = True
     integrator_type = "RK4" if usa_rk4 else "Eulero"
     # ----------------------------------
 
