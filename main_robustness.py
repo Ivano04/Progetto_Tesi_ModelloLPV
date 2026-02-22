@@ -10,10 +10,15 @@ from Controllo.PD_controller import LateralPDController
 
 def run_robustness_simulation(scenario_key):
     # --- CONFIGURAZIONE INTEGRATORE ---
+
+    #impostare su True per attivare il filtro ed eliminare il chattering anche in caso di rumore forte
+    usa_filtro_supervisore = True
+    supervisor_status = "Filtrato" if usa_filtro_supervisore else "Standard"
+
     # Impostare su False per verificare il fallimento numerico di Eulero con rumore 0.07
-    usa_rk4 = False
+    usa_rk4 = True
     integrator_type = "RK4" if usa_rk4 else "Eulero"
-    # ----------------------------------
+
 
     dt = 0.001
     total_time = 30.0
@@ -22,6 +27,9 @@ def run_robustness_simulation(scenario_key):
 
     # La cartella viene creata in Grafici_RK4/ o Grafici_Eulero/ in base all'integratore scelto
     run_dir = setup_results_dir(track_name, "Test_Robustezza", integrator_type)
+
+    test_type = f"Test_Robustezza_{supervisor_status}"
+    run_dir = setup_results_dir(track_name, test_type, integrator_type)
 
     model = DynamicBicycleModel()
     integrator = VehicleIntegrator(model, dt=dt)
@@ -56,7 +64,7 @@ def run_robustness_simulation(scenario_key):
 
         # 2. Calcolo errori e guadagni basati sui dati rumorosi
         e, theta_e, _ = estimator.get_errors(perceived)
-        kp, kd, mode = supervisor.update_and_get_gains(perceived.vx)
+        kp, kd, mode = supervisor.update_and_get_gains(perceived.vx, use_filter = usa_filtro_supervisore)
 
         # 3. Leggi di Controllo
         delta_cmd = lateral_ctrl.compute_control(e, theta_e, kp, kd)
