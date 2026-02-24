@@ -12,8 +12,7 @@ from Controllo.PD_controller import LateralPDController
 
 
 def run_simulation(track_type, integrator_type="RK4", with_noise=False):
-
-    #Esegue una simulazione completa con i parametri specificati e restituisce l'array degli errori.
+    # Esegue una simulazione completa con i parametri specificati e restituisce l'array degli errori.
 
     dt = 0.001
     total_time = 25.0
@@ -31,10 +30,14 @@ def run_simulation(track_type, integrator_type="RK4", with_noise=False):
     supervisor = SupervisorS()
     longitudinal_ctrl = VelocityPIDController(kp=1.0, ki=0.1, dt=dt)
 
-    # Configurazione Rumore (Magnitudo 0.07 come nei test di robustezza)
+    # Parametri Velocità Adattativa
+    v_max = 3.5
+    v_min = 1.0
+    sensibilita_curvatura = 12.0
+
+    # Configurazione Rumore
     noise_gen = Generator_Noise(disturb_vx=True, disturb_position=True, magnitude=0.07) if with_noise else None
 
-    target_speeds = np.linspace(0.5, 3.5, steps)
     history_e = []
 
     for i in range(steps):
@@ -49,14 +52,22 @@ def run_simulation(track_type, integrator_type="RK4", with_noise=False):
         else:
             perceived = state
 
-        # 2. Controllo LPV (Attiviamo il filtro se c'è rumore per un confronto equo)
-        e, theta_e, _ = estimator.get_errors(perceived)
+        # 2. Calcolo Errori e Curvatura
+        # Gestione del nuovo parametro di ritorno 'idx'
+        e, theta_e, _, idx = estimator.get_errors(perceived)
+
+        # Logica di velocità adattativa
+        kappa = estimator.get_curvature(idx, lookahead=15)
+        target_speed = v_max / (1 + sensibilita_curvatura * kappa)
+        target_speed = np.clip(target_speed, v_min, v_max)
+
+        # 3. Controllo LPV
         kp, kd, _ = supervisor.update_and_get_gains(perceived.vx, use_filter=with_noise)
 
         delta_cmd = lateral_ctrl.compute_control(e, theta_e, kp, kd)
-        d_cmd = longitudinal_ctrl.compute(target_speeds[i], state.vx)
+        d_cmd = longitudinal_ctrl.compute(target_speed, state.vx)
 
-        # 3. Applicazione Input e Integrazione
+        # 4. Applicazione Input e Integrazione
         u_in = VehicleInput(d=d_cmd, delta=delta_cmd).saturate()
 
         if integrator_type == "RK4":
@@ -66,9 +77,8 @@ def run_simulation(track_type, integrator_type="RK4", with_noise=False):
 
         history_e.append(e)
 
-        # Check divergenza (se il modello esplode, interrompiamo per evitare attese inutili)
+        # Check divergenza
         if np.isnan(state.vx) or abs(state.vx) > 50:
-            # Riempiamo il resto con NaN per segnalare il fallimento nel grafico
             history_e.extend([np.nan] * (steps - len(history_e)))
             break
 
@@ -76,10 +86,8 @@ def run_simulation(track_type, integrator_type="RK4", with_noise=False):
 
 
 def plot_integrator_comparison(run_dir, err_rk4, err_euler, track_name, noise_status):
-    #Genera un grafico specifico per il confronto tra i due metodi di integrazione.
     plt.figure(figsize=(12, 6))
 
-    # Plot Eulero (verifichiamo se è esploso)
     if np.any(np.isnan(err_euler)):
         plt.text(0.5, 0.5, 'DIVERGENZA NUMERICA EULERO',
                  horizontalalignment='center', verticalalignment='center',
@@ -87,10 +95,9 @@ def plot_integrator_comparison(run_dir, err_rk4, err_euler, track_name, noise_st
     else:
         plt.plot(err_euler, 'r--', label='Eulero (1° Ordine)', alpha=0.7)
 
-    # Plot RK4
     plt.plot(err_rk4, 'b-', label='RK4 (4° Ordine)', linewidth=2)
 
-    plt.title(f"Confronto Integratori: {track_name} ({noise_status})", fontweight='bold')
+    plt.title(f"Confronto Integratori (Velocità Adattativa): {track_name} ({noise_status})", fontweight='bold')
     plt.xlabel("Step Temporali")
     plt.ylabel("Errore Laterale [m]")
     plt.grid(True, alpha=0.3)
@@ -104,41 +111,34 @@ def main_confronto_integratori():
     circuits = ['racing', 'circular', 'eight']
     noise_scenarios = [False, True]
 
-    print("=== AVVIO ANALISI COMPARATIVA: EULERO VS RK4 ===")
+    print("=== AVVIO ANALISI COMPARATIVA ADATTATIVA: EULERO VS RK4 ===")
 
     for scenario in circuits:
         for with_noise in noise_scenarios:
             noise_label = "Con_Rumore" if with_noise else "Senza_Rumore"
             print(f"\n> Analisi su: {scenario} | {noise_label}")
 
-            # Esecuzione RK4
             err_rk4, track_name = run_simulation(scenario, "RK4", with_noise)
-            # Esecuzione Eulero
             err_euler, _ = run_simulation(scenario, "Eulero", with_noise)
 
-            # Setup cartella: Grafici_Confronto_Integratori / <Pista> / <Noise> / Run_...
-            # Passiamo "Confronto_Integratori" come tipo per creare la root corretta
-            run_dir = setup_results_dir(track_name, noise_label, "Confronto_Integratori")
+            run_dir = setup_results_dir(track_name, f"Confronto_Integratori_{noise_label}", "Analisi_Performance")
 
-            # Calcolo RMSE (solo se non ci sono NaN)
-            rmse_rk4 = np.sqrt(np.mean(err_rk4 ** 2))
+            rmse_rk4 = np.sqrt(np.mean(err_rk4[~np.isnan(err_rk4)] ** 2))
             is_euler_stable = not np.any(np.isnan(err_euler))
             rmse_euler = np.sqrt(np.mean(err_euler[~np.isnan(err_euler)] ** 2)) if is_euler_stable else float('inf')
 
-            # Salvataggio Metadati
             stats = {
                 "RMSE_RK4": f"{rmse_rk4:.6f} m",
                 "RMSE_Eulero": f"{rmse_euler:.6f} m" if is_euler_stable else "DIVERGENZA",
-                "Stato_Numerico_Eulero": "STABILE" if is_euler_stable else "FALLITO (Overflow)",
-                "Presenza_Rumore": "Sì (0.07)" if with_noise else "No"
+                "Stato_Eulero": "STABILE" if is_euler_stable else "FALLITO",
+                "Logica_Velocita": "Adattativa su Curvatura"
             }
-            save_metadata(run_dir, {"Pista": track_name, "Condizione": noise_label}, stats)
+            save_metadata(run_dir, {"Pista": track_name, "Noise": with_noise}, stats)
 
-            # Salvataggio CSV e Plot
             save_simulation_data(run_dir, {"err_rk4": err_rk4, "err_euler": err_euler})
             plot_integrator_comparison(run_dir, err_rk4, err_euler, track_name, noise_label)
 
-    print("\n✓ CONFRONTO COMPLETATO. Tutti i dati sono in 'Grafici_Confronto_Integratori/'.")
+    print("\n✓ CONFRONTO COMPLETATO.")
 
 
 if __name__ == "__main__":
