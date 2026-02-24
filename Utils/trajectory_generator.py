@@ -113,7 +113,7 @@ def get_trajectory(name: str) -> Tuple[List[Tuple[float, float]], str]:
 
     elif name == 'stadium':
         # Nuovo circuito a stadio per test transizioni LPV
-        path = generate_stadium_path(L=150.0, R=30.0, num_points=500)
+        path = generate_stadium_path(L=15.0, R=2.0, num_points=500)
         return path, "Circuito_Stadium"
 
     else:

@@ -110,7 +110,7 @@ def run_nominal_simulation(scenario_key, usa_rk4=True, live_plot=True):
 
 if __name__ == "__main__":
     # SCEGLI QUI IL CIRCUITO DA TESTARE: 'racing', 'circular', 'eight'
-    circuito_scelto = 'racing'
+    circuito_scelto = 'stadium'
 
     run_nominal_simulation(circuito_scelto, usa_rk4=True, live_plot=True)
 
