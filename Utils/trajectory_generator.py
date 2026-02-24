@@ -5,7 +5,7 @@ from scipy.interpolate import splev, splprep
 
 def generate_circular_path(radius: float, center: Tuple[float, float],
                            num_points: int = 150) -> List[Tuple[float, float]]:
-    #Genera percorso circolare
+    # Genera percorso circolare
     cx, cy = center
     angles = np.linspace(0, 2 * np.pi, num_points)
 
@@ -19,7 +19,7 @@ def generate_circular_path(radius: float, center: Tuple[float, float],
 
 
 def generate_figure_eight_path(width: float, num_points: int = 200) -> List[Tuple[float, float]]:
-    #Genera percorso a forma di 8
+    # Genera percorso a forma di 8
     path = []
     t = np.linspace(0, 2 * np.pi, num_points)
 
@@ -35,7 +35,7 @@ def generate_figure_eight_path(width: float, num_points: int = 200) -> List[Tupl
 def generate_circuite_path(waypoints: List[Tuple[float, float]],
                            num_points: int = 300,
                            smoothness: int = 3) -> List[Tuple[float, float]]:
-    #Genera circuito interpolando waypoints con spline cubica
+    # Genera circuito interpolando waypoints con spline cubica
     waypoints_array = np.array(waypoints)
     x = waypoints_array[:, 0]
     y = waypoints_array[:, 1]
@@ -48,24 +48,53 @@ def generate_circuite_path(waypoints: List[Tuple[float, float]],
     return path
 
 
-def get_mugello_waypoints() -> List[Tuple[float, float]]:
+def generate_stadium_path(L: float = 150.0, R: float = 30.0, num_points: int = 500) -> List[Tuple[float, float]]:
+    """
+    Genera un percorso a stadio (rettangolo con bordi arrotondati).
+    L: Lunghezza dei rettilinei
+    R: Raggio delle curve
+    """
+    path = []
+    # Ripartizione punti: ~25% per ogni segmento
+    pts_per_segment = num_points // 4
 
-    #Restituisce i waypoints ispirati al Circuito del Mugello.
+    # 1. Rettilineo Inferiore (da 0 a L)
+    for x in np.linspace(0, L, pts_per_segment):
+        path.append((x, 0.0))
+
+    # 2. Curva Destra (Semicerchio)
+    for theta in np.linspace(-np.pi / 2, np.pi / 2, pts_per_segment):
+        path.append((L + R * np.cos(theta), R + R * np.sin(theta)))
+
+    # 3. Rettilineo Superiore (da L a 0)
+    for x in np.linspace(L, 0, pts_per_segment):
+        path.append((x, 2 * R))
+
+    # 4. Curva Sinistra (Semicerchio)
+    for theta in np.linspace(np.pi / 2, 3 * np.pi / 2, pts_per_segment):
+        path.append((R * np.cos(theta), R + R * np.sin(theta)))
+
+    return path
+
+
+def get_mugello_waypoints() -> List[Tuple[float, float]]:
+    # Restituisce i waypoints ispirati al Circuito del Mugello.
 
     return [
-        (0.0, 0.0),    # Partenza / Rettilineo
-        (4.0, 0.0),    # Fine rettilineo principale
-        (5.5, 0.8),    # Curva 1: San Donato
-        (5.0, 2.5),    # Curva 2-3: Luco - Poggio Secco
-        (6.5, 3.5),    # Curva 4-5: Materassi - Borgo San Lorenzo
-        (8.5, 3.0),    # Curva 6-7: Casanova - Savelli
-        (10.0, 1.5),   # Curva 8-9: Arrabbiata 1 - Arrabbiata 2
-        (9.0, -1.0),   # Curva 10-11: Scarperia - Palagio
-        (6.0, -1.5),   # Curva 12: Correntaio
-        (3.0, -2.5),   # Curva 13-14: Biondetti
-        (0.5, -1.5),   # Curva 15: Bucine
-        (0.0, 0.0)     # Chiusura sul traguardo
+        (0.0, 0.0),  # Partenza / Rettilineo
+        (4.0, 0.0),  # Fine rettilineo principale
+        (5.5, 0.8),  # Curva 1: San Donato
+        (5.0, 2.5),  # Curva 2-3: Luco - Poggio Secco
+        (6.5, 3.5),  # Curva 4-5: Materassi - Borgo San Lorenzo
+        (8.5, 3.0),  # Curva 6-7: Casanova - Savelli
+        (10.0, 1.5),  # Curva 8-9: Arrabbiata 1 - Arrabbiata 2
+        (9.0, -1.0),  # Curva 10-11: Scarperia - Palagio
+        (6.0, -1.5),  # Curva 12: Correntaio
+        (3.0, -2.5),  # Curva 13-14: Biondetti
+        (0.5, -1.5),  # Curva 15: Bucine
+        (0.0, 0.0)  # Chiusura sul traguardo
     ]
+
 
 def get_trajectory(name: str) -> Tuple[List[Tuple[float, float]], str]:
     if name == 'racing':
@@ -81,6 +110,11 @@ def get_trajectory(name: str) -> Tuple[List[Tuple[float, float]], str]:
     elif name == 'eight':
         path = generate_figure_eight_path(width=4.0, num_points=200)
         return path, "Traiettoria_a_8"
+
+    elif name == 'stadium':
+        # Nuovo circuito a stadio per test transizioni LPV
+        path = generate_stadium_path(L=150.0, R=30.0, num_points=500)
+        return path, "Circuito_Stadium"
 
     else:
         raise ValueError(f"Traiettoria '{name}' non riconosciuta.")
