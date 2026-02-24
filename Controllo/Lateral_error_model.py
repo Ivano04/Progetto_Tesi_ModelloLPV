@@ -8,6 +8,10 @@ class LateralErrorEstimator:
         self.path = np.array(path)
 
     def get_errors(self, vehicle_state):
+        """
+        Calcola gli errori di tracking e restituisce anche l'indice del punto
+        più vicino per permettere il calcolo della curvatura locale.
+        """
         # 1. Trova l'indice del punto più vicino sulla traiettoria
         dists = np.linalg.norm(self.path - np.array([vehicle_state.X, vehicle_state.Y]), axis=1)
         idx = np.argmin(dists)
@@ -30,11 +34,42 @@ class LateralErrorEstimator:
         error_e = -dx * math.sin(phi_path) + dy * math.cos(phi_path)
 
         # 4. Calcolo Errore di Orientamento (theta_e)
-        # Deve essere normalizzato tra -pi e pi
         error_theta = vehicle_state.phi - phi_path
 
-        # Normalizzazione (usando la funzione già presente nel modello del collega)
+        # Normalizzazione (usando la funzione presente nel modello del veicolo)
         from Veicolo.Vehicle_model import normalize_angle
         error_theta = normalize_angle(error_theta)
 
-        return error_e, error_theta, phi_path
+        # Restituiamo anche idx per il calcolo della curvatura nel main
+        return error_e, error_theta, phi_path, idx
+
+    def get_curvature(self, idx, lookahead=10):
+        """
+        Calcola la curvatura locale (kappa) guardando la variazione dell'angolo
+        tra il punto corrente e un punto 'lookahead' più avanti.
+        """
+        # Indici dei punti da confrontare
+        p1_idx = idx
+        p2_idx = (idx + lookahead) % len(self.path)
+
+        # Angolo nel punto corrente
+        p1 = self.path[p1_idx]
+        p1_next = self.path[(p1_idx + 1) % len(self.path)]
+        phi1 = math.atan2(p1_next[1] - p1[1], p1_next[0] - p1[0])
+
+        # Angolo nel punto lookahead
+        p2 = self.path[p2_idx]
+        p2_next = self.path[(p2_idx + 1) % len(self.path)]
+        phi2 = math.atan2(p2_next[1] - p2[1], p2_next[0] - p2[0])
+
+        # Variazione angolare normalizzata
+        from Veicolo.Vehicle_model import normalize_angle
+        d_phi = abs(normalize_angle(phi2 - phi1))
+
+        # Distanza spaziale tra i due punti
+        dist = np.linalg.norm(self.path[p2_idx] - self.path[p1_idx])
+
+        # Curvatura approssimata: variazione angolo / variazione spazio
+        curvature = d_phi / (dist + 1e-5)
+
+        return curvature
