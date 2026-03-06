@@ -44,9 +44,12 @@ def save_metadata(run_dir, params, stats):
 def plot_dashboard(run_dir, history, path, title_suffix=""):
     """
     Genera il dashboard a 4 subplot, lo salva e lo MOSTRA a video.
+    Aggiornato per supportare 4 livelli del supervisore LPV.
     """
     time_axis = np.linspace(0, 30, len(history['e']))
-    mode_map = {'LOW': 1, 'MEDIUM': 2, 'HIGH': 3}
+
+    # 1. Mappatura stati aggiornata a 4 livelli
+    mode_map = {'LOW': 1, 'MEDIUM': 2, 'MEDIUM_HIGH': 3, 'HIGH': 4}
     mode_nums = [mode_map[m] for m in history['mode']]
 
     fig = plt.figure(figsize=(15, 9))
@@ -75,8 +78,12 @@ def plot_dashboard(run_dir, history, path, title_suffix=""):
     # --- 3. VELOCITÀ LPV (Destra Centro) ---
     ax_vx = fig.add_subplot(gs[1, 1], sharex=ax_err)
     ax_vx.plot(time_axis, history['vx'], 'k-', label='Velocità Reale $v_x$')
+
+    # Visualizzazione delle soglie di scheduling (Coerenti con Supervisor_S)
     ax_vx.axhline(y=1.0, color='g', linestyle=':', label='Soglia MED')
+    ax_vx.axhline(y=1.6, color='orange', linestyle=':', label='Soglia MED-HIGH')
     ax_vx.axhline(y=2.2, color='r', linestyle=':', label='Soglia HIGH')
+
     ax_vx.set_ylabel("[m/s]")
     ax_vx.set_title("Parametro LPV di Scheduling")
     ax_vx.grid(True, alpha=0.3)
@@ -85,8 +92,11 @@ def plot_dashboard(run_dir, history, path, title_suffix=""):
     # --- 4. STATO SUPERVISORE (Destra Basso) ---
     ax_sw = fig.add_subplot(gs[2, 1], sharex=ax_err)
     ax_sw.step(time_axis, mode_nums, 'g-', where='post', linewidth=2)
-    ax_sw.set_yticks([1, 2, 3])
-    ax_sw.set_yticklabels(['LOW', 'MED', 'HIGH'])
+
+    # Aggiornamento tick e label per i 4 stati
+    ax_sw.set_yticks([1, 2, 3, 4])
+    ax_sw.set_yticklabels(['LOW', 'MED', 'MED_HIGH', 'HIGH'])
+
     ax_sw.set_ylabel("Modo")
     ax_sw.set_xlabel("Tempo [s]")
     ax_sw.set_title("Stato del Supervisore S")

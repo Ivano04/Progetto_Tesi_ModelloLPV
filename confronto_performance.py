@@ -12,9 +12,12 @@ from Controllo.PD_controller import LateralPDController
 
 
 def run_simulation(track_type, integrator_type="RK4", with_noise=False):
-    # Esegue una simulazione completa con i parametri specificati e restituisce l'array degli errori.
+    """
+    Esegue una simulazione completa per confrontare la stabilità degli integratori
+    utilizzando il nuovo sistema LPV a 4 livelli.
+    """
 
-    dt = 0.001
+    dt = 0.01  # Passo leggermente più ampio del main per evidenziare differenze tra integratori
     total_time = 25.0
     steps = int(total_time / dt)
     path_points, track_name = get_trajectory(track_type)
@@ -30,7 +33,7 @@ def run_simulation(track_type, integrator_type="RK4", with_noise=False):
     supervisor = SupervisorS()
     longitudinal_ctrl = VelocityPIDController(kp=1.0, ki=0.1, dt=dt)
 
-    # Parametri Velocità Adattativa
+    # Parametri Velocità Adattativa (Coerenti con main_tesi.py)
     v_max = 3.5
     v_min = 1.0
     sensibilita_curvatura = 12.0
@@ -53,15 +56,13 @@ def run_simulation(track_type, integrator_type="RK4", with_noise=False):
             perceived = state
 
         # 2. Calcolo Errori e Curvatura
-        # Gestione del nuovo parametro di ritorno 'idx'
         e, theta_e, _, idx = estimator.get_errors(perceived)
 
-        # Logica di velocità adattativa
         kappa = estimator.get_curvature(idx, lookahead=15)
         target_speed = v_max / (1 + sensibilita_curvatura * kappa)
         target_speed = np.clip(target_speed, v_min, v_max)
 
-        # 3. Controllo LPV
+        # 3. Controllo LPV (Ora con 4 livelli di guadagno)
         kp, kd, _ = supervisor.update_and_get_gains(perceived.vx, use_filter=with_noise)
 
         delta_cmd = lateral_ctrl.compute_control(e, theta_e, kp, kd)
@@ -78,7 +79,7 @@ def run_simulation(track_type, integrator_type="RK4", with_noise=False):
         history_e.append(e)
 
         # Check divergenza
-        if np.isnan(state.vx) or abs(state.vx) > 50:
+        if np.isnan(state.vx) or abs(state.vx) > 50 or abs(e) > 5.0:
             history_e.extend([np.nan] * (steps - len(history_e)))
             break
 
@@ -97,7 +98,7 @@ def plot_integrator_comparison(run_dir, err_rk4, err_euler, track_name, noise_st
 
     plt.plot(err_rk4, 'b-', label='RK4 (4° Ordine)', linewidth=2)
 
-    plt.title(f"Confronto Integratori (Velocità Adattativa): {track_name} ({noise_status})", fontweight='bold')
+    plt.title(f"Confronto Integratori (LPV 4 Livelli): {track_name} ({noise_status})", fontweight='bold')
     plt.xlabel("Step Temporali")
     plt.ylabel("Errore Laterale [m]")
     plt.grid(True, alpha=0.3)
@@ -111,7 +112,7 @@ def main_confronto_integratori():
     circuits = ['racing', 'circular', 'eight']
     noise_scenarios = [False, True]
 
-    print("=== AVVIO ANALISI COMPARATIVA ADATTATIVA: EULERO VS RK4 ===")
+    print("=== AVVIO ANALISI PERFORMANCE LPV 4 LIVELLI: EULERO VS RK4 ===")
 
     for scenario in circuits:
         for with_noise in noise_scenarios:
@@ -121,9 +122,12 @@ def main_confronto_integratori():
             err_rk4, track_name = run_simulation(scenario, "RK4", with_noise)
             err_euler, _ = run_simulation(scenario, "Eulero", with_noise)
 
-            run_dir = setup_results_dir(track_name, f"Confronto_Integratori_{noise_label}", "Analisi_Performance")
+            run_dir = setup_results_dir(track_name, f"Confronto_4Livelli_{noise_label}", "Analisi_Performance")
 
-            rmse_rk4 = np.sqrt(np.mean(err_rk4[~np.isnan(err_rk4)] ** 2))
+            # Calcolo RMSE ignorando i valori NaN (divergenza)
+            clean_rk4 = err_rk4[~np.isnan(err_rk4)]
+            rmse_rk4 = np.sqrt(np.mean(clean_rk4 ** 2)) if len(clean_rk4) > 0 else float('inf')
+
             is_euler_stable = not np.any(np.isnan(err_euler))
             rmse_euler = np.sqrt(np.mean(err_euler[~np.isnan(err_euler)] ** 2)) if is_euler_stable else float('inf')
 
@@ -131,9 +135,9 @@ def main_confronto_integratori():
                 "RMSE_RK4": f"{rmse_rk4:.6f} m",
                 "RMSE_Eulero": f"{rmse_euler:.6f} m" if is_euler_stable else "DIVERGENZA",
                 "Stato_Eulero": "STABILE" if is_euler_stable else "FALLITO",
-                "Logica_Velocita": "Adattativa su Curvatura"
+                "Logica_LPV": "4 Livelli (LOW, MED, MED_HIGH, HIGH)"
             }
-            save_metadata(run_dir, {"Pista": track_name, "Noise": with_noise}, stats)
+            save_metadata(run_dir, {"Pista": track_name, "Noise": with_noise, "V_max": 3.5}, stats)
 
             save_simulation_data(run_dir, {"err_rk4": err_rk4, "err_euler": err_euler})
             plot_integrator_comparison(run_dir, err_rk4, err_euler, track_name, noise_label)

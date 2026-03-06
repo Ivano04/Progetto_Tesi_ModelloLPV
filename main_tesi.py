@@ -19,16 +19,19 @@ def run_nominal_simulation(scenario_key, usa_rk4=True, live_plot=True):
     path_array = np.array(path_points)
 
     # Parametri per la velocità adattativa
+    # Con v_max = 3.5, il veicolo supererà agevolmente la soglia dei 2.2 m/s
+    # attivando la modalità HIGH passando per la nuova MEDIUM_HIGH.
     v_max = 3.5  # Velocità bersaglio nei rettilinei [m/s]
     v_min = 1.0  # Velocità minima nelle curve strette [m/s]
     sensibilita_curvatura = 12.0  # Fattore di frenata in base alla curva
 
-    run_dir = setup_results_dir(track_name, "Analisi_Nominale_Adattativa", integrator_type)
+    run_dir = setup_results_dir(track_name, "Analisi_Nominale_Adattativa_4Livelli", integrator_type)
 
     model = DynamicBicycleModel()
     integrator = VehicleIntegrator(model, dt=dt)
     state = VehicleState(X=path_points[0][0], Y=path_points[0][1], phi=0.0, vx=0.1, vy=0.0, omega=0.0)
 
+    # Il supervisore ora gestisce internamente 4 stati: LOW, MEDIUM, MEDIUM_HIGH, HIGH
     supervisor = SupervisorS()
     estimator = LateralErrorEstimator(path_points)
     lateral_ctrl = LateralPDController()
@@ -43,25 +46,24 @@ def run_nominal_simulation(scenario_key, usa_rk4=True, live_plot=True):
         ax.plot(path_array[:, 0], path_array[:, 1], 'k--', alpha=0.2)
         line_follower, = ax.plot([], [], 'b-', linewidth=1.5, label='Scia')
         current_pos, = ax.plot([], [], 'ro', markersize=6, label='Auto')
-        ax.set_title(f"Live: {track_name} ({integrator_type}) - Velocità Adattativa")
+        ax.set_title(f"Live: {track_name} ({integrator_type}) - LPV 4 Livelli")
         ax.grid(True, alpha=0.2)
-    # ------------------------------------------
 
-    print(f"AVVIO SIMULAZIONE INTELLIGENTE: {track_name} con {integrator_type}...")
+
+    print(f"AVVIO SIMULAZIONE INTELLIGENTE (4 LIVELLI): {track_name} con {integrator_type}...")
 
     for i in range(steps):
-        # 1. Percezione e Calcolo Errori (Utilizzo del nuovo output idx)
+        # 1. Percezione e Calcolo Errori
         e, theta_e, phi_path, current_idx = estimator.get_errors(state)
 
         # 2. CALCOLO VELOCITÀ ADATTATIVA
-        # Calcoliamo la curvatura locale guardando 15 punti avanti per anticipare la curva
         kappa = estimator.get_curvature(current_idx, lookahead=15)
 
         # Logica: la velocità diminuisce all'aumentare della curvatura (kappa)
         target_speed = v_max / (1 + sensibilita_curvatura * kappa)
         target_speed = np.clip(target_speed, v_min, v_max)
 
-        # 3. Controllo LPV e Guadagni
+        # 3. Controllo LPV e Guadagni (Usa ora la logica a 4 stati aggiornata)
         kp, kd, mode = supervisor.update_and_get_gains(state.vx)
 
         # 4. Leggi di Controllo
@@ -101,17 +103,18 @@ def run_nominal_simulation(scenario_key, usa_rk4=True, live_plot=True):
     save_simulation_data(run_dir, history)
     rmse = np.sqrt(np.mean(np.array(history['e']) ** 2))
     save_metadata(run_dir,
-                  {"Stato": "Adattativo Curvatura", "Track": track_name, "Integratore": integrator_type,
+                  {"Stato": "LPV 4 Livelli", "Track": track_name, "Integratore": integrator_type,
                    "V_max": v_max},
                   {"RMSE": f"{rmse:.5f}m", "V_media": f"{np.mean(history['vx']):.2f} m/s"})
 
-    plot_dashboard(run_dir, history, path_points, f"{track_name} - Adattativo {integrator_type}")
+    # Dashboard aggiornata in plotting_utils per mostrare il 4° stato
+    plot_dashboard(run_dir, history, path_points, f"{track_name} - LPV 4 Livelli")
 
 
 if __name__ == "__main__":
-    # SCEGLI QUI IL CIRCUITO DA TESTARE: 'racing', 'circular', 'eight'
-    circuito_scelto = 'stadium'
+    # Testiamo sul circuito 'stadium' per vedere bene le transizioni rettilineo/curva
+    circuito_scelto = 'racing'
 
     run_nominal_simulation(circuito_scelto, usa_rk4=True, live_plot=True)
 
-    print(f"\n✓ Simulazione intelligente su {circuito_scelto} completata.")
+    print(f"\n✓ Simulazione a 4 livelli su {circuito_scelto} completata.")
