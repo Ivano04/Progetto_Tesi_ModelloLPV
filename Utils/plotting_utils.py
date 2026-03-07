@@ -44,9 +44,11 @@ def save_metadata(run_dir, params, stats):
 def plot_dashboard(run_dir, history, path, title_suffix=""):
     """
     Genera il dashboard a 4 subplot, lo salva e lo MOSTRA a video.
-    Aggiornato per supportare 4 livelli del supervisore LPV.
+    Aggiornato per supportare 4 livelli LPV e visualizzazione velocità rumorosa.
     """
-    time_axis = np.linspace(0, 30, len(history['e']))
+    # Assumiamo una durata di 30s coerente con i main, adattandola alla lunghezza effettiva
+    total_time = 30.0
+    time_axis = np.linspace(0, total_time, len(history['e']))
 
     # 1. Mappatura stati aggiornata a 4 livelli
     mode_map = {'LOW': 1, 'MEDIUM': 2, 'MEDIUM_HIGH': 3, 'HIGH': 4}
@@ -77,17 +79,22 @@ def plot_dashboard(run_dir, history, path, title_suffix=""):
 
     # --- 3. VELOCITÀ LPV (Destra Centro) ---
     ax_vx = fig.add_subplot(gs[1, 1], sharex=ax_err)
-    ax_vx.plot(time_axis, history['vx'], 'k-', label='Velocità Reale $v_x$')
+    ax_vx.plot(time_axis, history['vx'], 'k-', label='Velocità Reale $v_x$', linewidth=1.5, zorder=5)
+
+    # NOVITÀ: Visualizzazione velocità percepita (se presente nella storia)
+    if 'vx_perceived' in history:
+        ax_vx.plot(time_axis, history['vx_perceived'], color='red', alpha=0.35,
+                   label='Velocità Percepita $v_{perc}$', linewidth=0.8, zorder=2)
 
     # Visualizzazione delle soglie di scheduling (Coerenti con Supervisor_S)
-    ax_vx.axhline(y=1.0, color='g', linestyle=':', label='Soglia MED')
-    ax_vx.axhline(y=1.6, color='orange', linestyle=':', label='Soglia MED-HIGH')
-    ax_vx.axhline(y=2.2, color='r', linestyle=':', label='Soglia HIGH')
+    ax_vx.axhline(y=1.0, color='g', linestyle=':', label='Soglia MED', alpha=0.6)
+    ax_vx.axhline(y=1.6, color='purple', linestyle=':', label='Soglia MED-HIGH', alpha=0.6)
+    ax_vx.axhline(y=2.2, color='r', linestyle=':', label='Soglia HIGH', alpha=0.6)
 
     ax_vx.set_ylabel("[m/s]")
     ax_vx.set_title("Parametro LPV di Scheduling")
     ax_vx.grid(True, alpha=0.3)
-    ax_vx.legend(loc='lower right')
+    ax_vx.legend(loc='lower right', fontsize='small', ncol=2)
 
     # --- 4. STATO SUPERVISORE (Destra Basso) ---
     ax_sw = fig.add_subplot(gs[2, 1], sharex=ax_err)
