@@ -44,7 +44,7 @@ def run_robustness_simulation(scenario_key, usa_rk4=True, live_plot=True):
 
     # --- CONFIGURAZIONE RUMORE ---
     # Impostato a 0.1 per un test di sbandamento significativo ma controllabile
-    noise_magnitude = 0.1
+    noise_magnitude = 1.1
     noise_gen = Generator_Noise(
         disturb_vx=True,
         disturb_position=True,
@@ -52,7 +52,7 @@ def run_robustness_simulation(scenario_key, usa_rk4=True, live_plot=True):
         magnitude=noise_magnitude,
         magnitude_position=noise_magnitude,
         magnitude_heading=noise_magnitude * 0.97,
-        disturbance_type="noise"
+        disturbance_type="impulse"
     )
 
     history = {'x': [], 'y': [], 'vx': [], 'e': [], 'theta_e': [], 'mode': [], 'target_v': []}
@@ -150,5 +150,5 @@ def run_robustness_simulation(scenario_key, usa_rk4=True, live_plot=True):
 
 
 if __name__ == "__main__":
-    # Test sul circuito racing (Mugello) per vedere il comportamento sotto stress
+    # Test sul circuito racing per vedere il comportamento sotto stress
     run_robustness_simulation('racing', usa_rk4=True, live_plot=True)

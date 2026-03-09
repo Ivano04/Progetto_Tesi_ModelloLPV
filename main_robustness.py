@@ -43,12 +43,12 @@ def run_robustness_simulation(scenario_key, usa_rk4=True, live_plot=True):
     lateral_ctrl = LateralPDController()
     longitudinal_ctrl = VelocityPIDController(kp=1.0, ki=0.1, dt=dt)
 
-    # Rumore sui sensori (Incrementato a 0.2 come da tua richiesta)
-    noise_magnitude = 0.2
+    # Rumore sui sensori
+    noise_magnitude = 1.3
     noise_gen = Generator_Noise(disturb_vx=True,
                                 disturb_position=True,
                                 magnitude=noise_magnitude,
-                                disturbance_type='sinusoidal')
+                                disturbance_type='impulse')
 
     # AGGIUNTA: vx_perceived alla storia per il plotting
     history = {'x': [], 'y': [], 'vx': [], 'vx_perceived': [], 'e': [], 'theta_e': [], 'mode': [], 'target_v': []}

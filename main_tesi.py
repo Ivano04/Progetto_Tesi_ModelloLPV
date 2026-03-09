@@ -10,7 +10,7 @@ from Controllo.PD_controller import LateralPDController
 
 
 def run_nominal_simulation(scenario_key, usa_rk4=True, live_plot=True):
-    # --- CONFIGURAZIONE PARAMETRI ---
+    # CONFIGURAZIONE PARAMETRI
     integrator_type = "RK4" if usa_rk4 else "Eulero"
     dt = 0.001
     total_time = 30.0
@@ -31,7 +31,7 @@ def run_nominal_simulation(scenario_key, usa_rk4=True, live_plot=True):
     integrator = VehicleIntegrator(model, dt=dt)
     state = VehicleState(X=path_points[0][0], Y=path_points[0][1], phi=0.0, vx=0.1, vy=0.0, omega=0.0)
 
-    # Il supervisore ora gestisce internamente 4 stati: LOW, MEDIUM, MEDIUM_HIGH, HIGH
+    # Il supervisore gestisce internamente 4 stati: LOW, MEDIUM, MEDIUM_HIGH, HIGH
     supervisor = SupervisorS()
     estimator = LateralErrorEstimator(path_points)
     lateral_ctrl = LateralPDController()
@@ -39,7 +39,7 @@ def run_nominal_simulation(scenario_key, usa_rk4=True, live_plot=True):
 
     history = {'x': [], 'y': [], 'vx': [], 'e': [], 'theta_e': [], 'mode': [], 'target_v': []}
 
-    # SETUP VISUALIZZAZIONE LIVE LEGGERA ---
+    # SETUP VISUALIZZAZIONE LIVE LEGGERA
     if live_plot:
         plt.ion()
         fig, ax = plt.subplots(figsize=(7, 7))
@@ -63,7 +63,7 @@ def run_nominal_simulation(scenario_key, usa_rk4=True, live_plot=True):
         target_speed = v_max / (1 + sensibilita_curvatura * kappa)
         target_speed = np.clip(target_speed, v_min, v_max)
 
-        # 3. Controllo LPV e Guadagni (Usa ora la logica a 4 stati aggiornata)
+        # 3. Controllo LPV e Guadagni
         kp, kd, mode = supervisor.update_and_get_gains(state.vx)
 
         # 4. Leggi di Controllo

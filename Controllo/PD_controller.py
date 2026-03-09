@@ -22,7 +22,7 @@ class LateralPDController:
         action_d = kd * error_theta
 
         # 3. Somma delle componenti
-        u = action_p + action_d
+        u = action_p + action_d #u = Kp * e + Kd * θₑ
 
         # 4. Saturazione dell'output
         # Impedisce al software di richiedere angoli di sterzo fisicamente impossibili
