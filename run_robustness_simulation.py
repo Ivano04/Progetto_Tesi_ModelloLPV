@@ -19,7 +19,7 @@ def run_robustness_simulation(scenario_key, usa_rk4=True, live_plot=True):
     usa_filtro_supervisore = True  # Fondamentale con dati rumorosi per evitare saltellamenti tra i 4 stati
     integrator_type = "RK4" if usa_rk4 else "Eulero"
 
-    dt = 0.005  # Passo temporale bilanciato tra velocità e precisione
+    dt = 0.04 # Passo temporale bilanciato tra velocità e precisione
     total_time = 30.0
     steps = int(total_time / dt)
     path_points, track_name = get_trajectory(scenario_key)
@@ -44,7 +44,7 @@ def run_robustness_simulation(scenario_key, usa_rk4=True, live_plot=True):
 
     # --- CONFIGURAZIONE RUMORE ---
     # Impostato a 0.1 per un test di sbandamento significativo ma controllabile
-    noise_magnitude = 1.1
+    noise_magnitude = 0.1
     noise_gen = Generator_Noise(
         disturb_vx=True,
         disturb_position=True,
@@ -52,7 +52,7 @@ def run_robustness_simulation(scenario_key, usa_rk4=True, live_plot=True):
         magnitude=noise_magnitude,
         magnitude_position=noise_magnitude,
         magnitude_heading=noise_magnitude * 0.97,
-        disturbance_type="impulse"
+        disturbance_type="noise"
     )
 
     history = {'x': [], 'y': [], 'vx': [], 'e': [], 'theta_e': [], 'mode': [], 'target_v': []}

@@ -101,11 +101,14 @@ def run_nominal_simulation(scenario_key, usa_rk4=True, live_plot=True):
 
     # Salvataggio Risultati
     save_simulation_data(run_dir, history)
+    vx_array = np.array(history['vx'])
     rmse = np.sqrt(np.mean(np.array(history['e']) ** 2))
+    e_max = np.max(np.abs(history['e']))
+    v_max = np.max(vx_array)
     save_metadata(run_dir,
                   {"Stato": "LPV 4 Livelli", "Track": track_name, "Integratore": integrator_type,
                    "V_max": v_max},
-                  {"RMSE": f"{rmse:.5f}m", "V_media": f"{np.mean(history['vx']):.2f} m/s"})
+                  {"RMSE": f"{rmse:.5f}m", "Errore_Max": f"{e_max:.5f}m","V_media": f"{np.mean(history['vx']):.2f} m/s", "V_max_registrata": f"{v_max:.2f} m/s"})
 
     # Dashboard aggiornata in plotting_utils per mostrare il 4° stato
     plot_dashboard(run_dir, history, path_points, f"{track_name} - LPV 4 Livelli")

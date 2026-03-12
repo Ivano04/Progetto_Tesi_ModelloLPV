@@ -44,11 +44,11 @@ def run_robustness_simulation(scenario_key, usa_rk4=True, live_plot=True):
     longitudinal_ctrl = VelocityPIDController(kp=1.0, ki=0.1, dt=dt)
 
     # Rumore sui sensori
-    noise_magnitude = 1.3
+    noise_magnitude = 0.1
     noise_gen = Generator_Noise(disturb_vx=True,
                                 disturb_position=True,
                                 magnitude=noise_magnitude,
-                                disturbance_type='impulse')
+                                disturbance_type='noise')
 
     # AGGIUNTA: vx_perceived alla storia per il plotting
     history = {'x': [], 'y': [], 'vx': [], 'vx_perceived': [], 'e': [], 'theta_e': [], 'mode': [], 'target_v': []}
@@ -124,10 +124,12 @@ def run_robustness_simulation(scenario_key, usa_rk4=True, live_plot=True):
         plt.close(fig)
 
     save_simulation_data(run_dir, history)
+    actual_e = np.array(history['e'])
     rmse = np.sqrt(np.mean(np.array(history['e']) ** 2))
+    e_max = np.max(np.abs(actual_e))
     save_metadata(run_dir,
-                  {"Test": "Robustezza_4Livelli", "Noise": noise_magnitude, "Type": "Sinusoidal", "Int": integrator_type},
-                  {"RMSE": f"{rmse:.5f}m", "Status": "Success" if not np.isnan(rmse) else "Failed"})
+                  {"Test": "Robustezza_4Livelli", "Noise": noise_magnitude, "Type": noise_gen.disturbance_type, "Int": integrator_type},
+                  {"RMSE": f"{rmse:.5f}m", "Errore_Max": f"{e_max:.5f}m","Status": "Success" if not np.isnan(rmse) else "Failed"})
 
     # La dashboard mostrerà ora i 4 livelli e il confronto tra velocità reale e percepita
     plot_dashboard(run_dir, history, path_points, f"{track_name} - Robustezza 4 Livelli")
@@ -136,5 +138,5 @@ def run_robustness_simulation(scenario_key, usa_rk4=True, live_plot=True):
 if __name__ == "__main__":
     circuito_selezionato = 'racing'
     # Per robustezza con rumore 0.2, RK4 è decisamente preferibile ad Eulero
-    run_robustness_simulation(circuito_selezionato, usa_rk4=True, live_plot=True)
+    run_robustness_simulation(circuito_selezionato, usa_rk4=False, live_plot=True)
     print(f"\n✓ Analisi di robustezza (4 Livelli) su {circuito_selezionato} completata.")
